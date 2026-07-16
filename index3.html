@@ -1,0 +1,1686 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>최근 7일 신규 일반음식점 조회 - 정상코드 수정본</title>
+  <style>
+    :root {
+      --bg: #0D1117;
+      --panel: #161B22;
+      --panel-2: #1C2333;
+      --line: #30363D;
+      --text: #E6EDF3;
+      --muted: #8B949E;
+      --muted-2: #484F58;
+      --accent: #00E5A0;
+      --accent-2: #00C98B;
+      --accent-dim: rgba(0,229,160,.12);
+      --danger: #F85149;
+      --ok: #3FB950;
+      --warn: #D29922;
+      --chip-bg: #1C2333;
+      --chip-border: #2E3650;
+      --shadow: 0 10px 28px rgba(0,0,0,.35);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Pretendard', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 56px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; margin-bottom: 20px; }
+    h1 { margin: 0 0 8px; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; font-weight: 700; }
+    .subtitle { color: var(--muted); margin: 0; max-width: 720px; font-size: 13px; }
+    .badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(0,229,160,.3);
+      padding: 7px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: .02em;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-top: 16px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .field.hidden-field { display: none; }
+    .hidden-field-inline { display: none; }
+    .field { grid-column: span 3; }
+    .field.wide { grid-column: span 6; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; letter-spacing: .01em; }
+    input, select, button, textarea { font: inherit; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    input::placeholder { color: var(--muted-2); }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    input[type="date"] { color-scheme: dark; cursor: pointer; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) brightness(1.6);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 5px;
+      transition: background .15s;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover { background: var(--panel-2); }
+    input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); }
+    select option { background: var(--panel-2); color: var(--text); }
+    .checkrow { display: flex; align-items: center; gap: 9px; min-height: 40px; }
+    .checkrow label { margin: 0; font-weight: 500; color: var(--text); cursor: pointer; font-size: 13px; }
+    .hint { color: var(--muted-2); font-size: 11px; margin-top: 5px; line-height: 1.5; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px; }
+    button {
+      border: 0;
+      background: var(--accent);
+      color: #0D1117;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: transform .08s ease, background .15s ease, opacity .15s ease;
+      font-size: 13px;
+    }
+    button:hover { background: var(--accent-2); }
+    button:active { transform: translateY(1px); }
+    button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+    button.secondary:hover { background: #242b3d; }
+    button.ghost { background: transparent; color: var(--text-secondary, var(--muted)); border: 1px solid var(--line); }
+    button.ghost:hover { background: var(--panel-2); border-color: var(--muted-2); color: var(--text); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    .status {
+      margin-top: 16px;
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--muted);
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .status.ok { color: var(--ok); background: rgba(63,185,80,.08); border-color: rgba(63,185,80,.3); }
+    .status.warn { color: var(--warn); background: rgba(210,153,34,.08); border-color: rgba(210,153,34,.3); }
+    .status.err { color: var(--danger); background: rgba(248,81,73,.08); border-color: rgba(248,81,73,.3); }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+    .card .k { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .card .v { font-size: 26px; font-weight: 700; margin-top: 5px; letter-spacing: -0.02em; color: var(--accent); }
+    .card .s { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .toolbar { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .toolbar h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; font-weight: 600; color: var(--text); text-transform: uppercase; }
+    .filterbox { max-width: 320px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { display: inline-flex; gap: 6px; align-items: center; padding: 6px 12px; background: var(--chip-bg); border: 1px solid var(--chip-border); border-radius: 999px; color: var(--accent); font-weight: 600; font-size: 12px; cursor: pointer; transition: background .15s, border-color .15s, transform .08s; }
+    .chip:hover { background: #232c44; border-color: var(--accent); }
+    .chip:active { transform: translateY(1px); }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #0D1117; }
+    .chip.active strong { color: #0D1117; }
+    .chip strong { color: var(--text); }
+    .tablewrap { width: 100%; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); max-height: 640px; }
+    table { border-collapse: collapse; width: 100%; min-width: 1570px; table-layout: fixed; background: var(--panel); }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 13px; line-height: 1.55; word-break: keep-all; overflow-wrap: break-word; white-space: normal; }
+    th { position: sticky; top: 0; background: var(--panel-2); z-index: 1; color: var(--muted); font-size: 11px; letter-spacing: .04em; white-space: nowrap; text-transform: uppercase; font-weight: 600; }
+    tbody tr { transition: background .12s; }
+    tbody tr:hover { background: var(--panel-2); }
+    td strong { color: var(--text); font-weight: 600; }
+    .addr { color: var(--muted); min-width: 280px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; color: var(--muted); }
+    .empty { color: var(--muted-2); text-align: center; padding: 48px 16px; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; color: var(--muted); font-weight: 600; font-size: 12px; }
+    summary:hover { color: var(--text); }
+    .notice { font-size: 12px; color: var(--muted-2); margin-top: 12px; line-height: 1.7; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    @media (max-width: 900px) {
+      header { display: block; }
+      .badge { display: inline-block; margin-top: 10px; }
+      .field, .field.wide { grid-column: 1 / -1; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { display: block; }
+      .filterbox { max-width: none; margin-top: 10px; }
+    }
+    @media (max-width: 560px) {
+      .cards { grid-template-columns: 1fr; }
+      .actions button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>최근 7일 신규 일반음식점 조회</h1>
+        <p class="subtitle">행정안전부 식품 일반음식점 조회서비스에서 인허가일자 기준으로 신규 업장을 가져오고, 지역 키워드와 영업상태를 함께 걸러 CSV로 내려받습니다.</p>
+      </div>
+      <span class="badge">REST · JSON · CSV Export · Fixed</span>
+    </header>
+
+    <section class="panel" aria-labelledby="search-title">
+      <h2 id="search-title" class="sr-only">조회 조건</h2>
+      <div class="grid">
+        <div class="field wide hidden-field">
+          <label for="serviceKey">공공데이터포털 일반 인증키</label>
+          <input id="serviceKey" type="password" autocomplete="off" spellcheck="false" />
+          <div class="hint">HTML 안에 키가 들어있습니다. 공개 서버나 깃허브에는 올리지 마세요.</div>
+        </div>
+        <div class="field hidden-field">
+          <label for="endpoint">요청 URL</label>
+          <input id="endpoint" type="text" spellcheck="false" />
+          <div class="hint">기본값: /general_restaurants/info</div>
+        </div>
+        <div class="field">
+          <label for="region">지역 키워드</label>
+          <input id="region" type="text" placeholder="예: 서울특별시 마포구, 마포구, 부산광역시" />
+          <div class="hint">도로명주소 LIKE 조건과 화면 필터에 사용됩니다.</div>
+        </div>
+        <div class="field">
+          <label for="startDate">시작일</label>
+          <input id="startDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="endDate">종료일</label>
+          <input id="endDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="perPage">페이지당 건수</label>
+          <input id="perPage" type="number" min="1" max="100" value="100" />
+          <div class="hint">공공데이터 API 최대값은 100건입니다. 100건이 꽉 차면 다음 페이지를 자동으로 이어서 받습니다.</div>
+        </div>
+        <div class="field">
+          <label for="maxPages">최대 페이지</label>
+          <input id="maxPages" type="number" min="1" max="200" value="20" />
+          <div class="hint">트래픽 보호용 안전장치입니다.</div>
+        </div>
+        <div class="field">
+          <label for="businessName">업장명 포함</label>
+          <input id="businessName" type="text" placeholder="선택: 카페, 분식 등" />
+        </div>
+        <div class="field">
+          <label for="opnCodeSelect">자치단체(지역) 선택</label>
+          <select id="opnCodeSelect" aria-label="개방자치단체 선택">
+<option value="">자치단체 선택</option>
+            <option value="6110000_ALL">서울특별시 전체 (6110000_ALL)</option>
+            <option value="6260000_ALL">부산광역시 전체 (6260000_ALL)</option>
+            <option value="6270000_ALL">대구광역시 전체 (6270000_ALL)</option>
+            <option value="6280000_ALL">인천광역시 전체 (6280000_ALL)</option>
+            <option value="6290000_ALL">광주광역시 전체 (6290000_ALL)</option>
+            <option value="6300000_ALL">대전광역시 전체 (6300000_ALL)</option>
+            <option value="6310000_ALL">울산광역시 전체 (6310000_ALL)</option>
+            <option value="5690000_ALL">세종특별자치시 전체 (5690000_ALL)</option>
+            <option value="6410000_ALL">경기도 전체 (6410000_ALL)</option>
+            <option value="6530000_ALL">강원특별자치도 전체 (6530000_ALL)</option>
+            <option value="6430000_ALL">충청북도 전체 (6430000_ALL)</option>
+            <option value="6440000_ALL">충청남도 전체 (6440000_ALL)</option>
+            <option value="6540000_ALL">전북특별자치도 전체 (6540000_ALL)</option>
+            <option value="6460000_ALL">전라남도 전체 (6460000_ALL)</option>
+            <option value="6470000_ALL">경상북도 전체 (6470000_ALL)</option>
+            <option value="6480000_ALL">경상남도 전체 (6480000_ALL)</option>
+            <option value="6500000_ALL">제주특별자치도 전체 (6500000_ALL)</option>
+            <option value="6410000">경기도 (6410000)</option>
+            <option value="6480000">경상남도 (6480000)</option>
+            <option value="6470000">경상북도 (6470000)</option>
+            <option value="6290000">광주광역시 (6290000)</option>
+            <option value="6270000">대구광역시 (6270000)</option>
+            <option value="6300000">대전광역시 (6300000)</option>
+            <option value="6260000">부산광역시 (6260000)</option>
+            <option value="6110000">서울특별시 (6110000)</option>
+            <option value="6310000">울산광역시 (6310000)</option>
+            <option value="6280000">인천광역시 (6280000)</option>
+            <option value="6460000">전라남도 (6460000)</option>
+            <option value="6540000">전북특별자치도 (6540000)</option>
+            <option value="6500000">제주도 (6500000)</option>
+            <option value="6440000">충청남도 (6440000)</option>
+            <option value="6430000">충청북도 (6430000)</option>
+            <option value="5690000">세종특별자치시 (5690000)</option>
+            <option value="4201000">강원강릉시 (4201000)</option>
+            <option value="4341000">강원고성군 (4341000)</option>
+            <option value="4211000">강원동해시 (4211000)</option>
+            <option value="4241000">강원삼척시 (4241000)</option>
+            <option value="4231000">강원속초시 (4231000)</option>
+            <option value="4321000">강원양구군 (4321000)</option>
+            <option value="4351000">강원양양군 (4351000)</option>
+            <option value="4271000">강원영월군 (4271000)</option>
+            <option value="4191000">강원원주시 (4191000)</option>
+            <option value="4331000">강원인제군 (4331000)</option>
+            <option value="4291000">강원정선군 (4291000)</option>
+            <option value="4301000">강원철원군 (4301000)</option>
+            <option value="4181000">강원춘천시 (4181000)</option>
+            <option value="4221000">강원태백시 (4221000)</option>
+            <option value="4281000">강원평창군 (4281000)</option>
+            <option value="4251000">강원홍천군 (4251000)</option>
+            <option value="4311000">강원화천군 (4311000)</option>
+            <option value="4261000">강원횡성군 (4261000)</option>
+            <option value="4160000">경기가평군 (4160000)</option>
+            <option value="3940000">경기고양시 (3940000)</option>
+            <option value="3970000">경기과천시 (3970000)</option>
+            <option value="3900000">경기광명시 (3900000)</option>
+            <option value="5540000">경기광주시 (5540000)</option>
+            <option value="3980000">경기구리시 (3980000)</option>
+            <option value="4020000">경기군포시 (4020000)</option>
+            <option value="4090000">경기김포시 (4090000)</option>
+            <option value="3990000">경기남양주시 (3990000)</option>
+            <option value="3920000">경기동두천시 (3920000)</option>
+            <option value="3860000">경기부천시 (3860000)</option>
+            <option value="3780000">경기성남시 (3780000)</option>
+            <option value="3740000">경기수원시 (3740000)</option>
+            <option value="4010000">경기시흥시 (4010000)</option>
+            <option value="3930000">경기안산시 (3930000)</option>
+            <option value="4080000">경기안성시 (4080000)</option>
+            <option value="3830000">경기안양시 (3830000)</option>
+            <option value="5590000">경기양주시 (5590000)</option>
+            <option value="4170000">경기양평군 (4170000)</option>
+            <option value="5700000">경기여주시 (5700000)</option>
+            <option value="4140000">경기연천군 (4140000)</option>
+            <option value="4000000">경기오산시 (4000000)</option>
+            <option value="4050000">경기용인시 (4050000)</option>
+            <option value="4030000">경기의왕시 (4030000)</option>
+            <option value="3820000">경기의정부시 (3820000)</option>
+            <option value="4070000">경기이천시 (4070000)</option>
+            <option value="4060000">경기파주시 (4060000)</option>
+            <option value="3910000">경기평택시 (3910000)</option>
+            <option value="5600000">경기포천시 (5600000)</option>
+            <option value="4040000">경기하남시 (4040000)</option>
+            <option value="5530000">경기화성시 (5530000)</option>
+            <option value="5370000">경남거제시 (5370000)</option>
+            <option value="5470000">경남거창군 (5470000)</option>
+            <option value="5420000">경남고성군 (5420000)</option>
+            <option value="5350000">경남김해시 (5350000)</option>
+            <option value="5430000">경남남해군 (5430000)</option>
+            <option value="5360000">경남밀양시 (5360000)</option>
+            <option value="5340000">경남사천시 (5340000)</option>
+            <option value="5450000">경남산청군 (5450000)</option>
+            <option value="5380000">경남양산시 (5380000)</option>
+            <option value="5390000">경남의령군 (5390000)</option>
+            <option value="5310000">경남진주시 (5310000)</option>
+            <option value="5410000">경남창녕군 (5410000)</option>
+            <option value="5670000">경남창원시 (5670000)</option>
+            <option value="5330000">경남통영시 (5330000)</option>
+            <option value="5440000">경남하동군 (5440000)</option>
+            <option value="5400000">경남함안군 (5400000)</option>
+            <option value="5460000">경남함양군 (5460000)</option>
+            <option value="5480000">경남합천군 (5480000)</option>
+            <option value="5130000">경북경산시 (5130000)</option>
+            <option value="5050000">경북경주시 (5050000)</option>
+            <option value="5200000">경북고령군 (5200000)</option>
+            <option value="5080000">경북구미시 (5080000)</option>
+            <option value="5060000">경북김천시 (5060000)</option>
+            <option value="5120000">경북문경시 (5120000)</option>
+            <option value="5240000">경북봉화군 (5240000)</option>
+            <option value="5110000">경북상주시 (5110000)</option>
+            <option value="5210000">경북성주군 (5210000)</option>
+            <option value="5070000">경북안동시 (5070000)</option>
+            <option value="5180000">경북영덕군 (5180000)</option>
+            <option value="5170000">경북영양군 (5170000)</option>
+            <option value="5090000">경북영주시 (5090000)</option>
+            <option value="5100000">경북영천시 (5100000)</option>
+            <option value="5230000">경북예천군 (5230000)</option>
+            <option value="5260000">경북울릉군 (5260000)</option>
+            <option value="5250000">경북울진군 (5250000)</option>
+            <option value="5150000">경북의성군 (5150000)</option>
+            <option value="5190000">경북청도군 (5190000)</option>
+            <option value="5160000">경북청송군 (5160000)</option>
+            <option value="5220000">경북칠곡군 (5220000)</option>
+            <option value="5020000">경북포항시 (5020000)</option>
+            <option value="3630000">광주광산구 (3630000)</option>
+            <option value="3610000">광주남구 (3610000)</option>
+            <option value="3590000">광주동구 (3590000)</option>
+            <option value="3620000">광주북구 (3620000)</option>
+            <option value="3600000">광주서구 (3600000)</option>
+            <option value="5141000">대구군위군 (5141000)</option>
+            <option value="3440000">대구남구 (3440000)</option>
+            <option value="3470000">대구달서구 (3470000)</option>
+            <option value="3480000">대구달성군 (3480000)</option>
+            <option value="3420000">대구동구 (3420000)</option>
+            <option value="3450000">대구북구 (3450000)</option>
+            <option value="3430000">대구서구 (3430000)</option>
+            <option value="3460000">대구수성구 (3460000)</option>
+            <option value="3410000">대구중구 (3410000)</option>
+            <option value="3680000">대전대덕구 (3680000)</option>
+            <option value="3640000">대전동구 (3640000)</option>
+            <option value="3660000">대전서구 (3660000)</option>
+            <option value="3670000">대전유성구 (3670000)</option>
+            <option value="3650000">대전중구 (3650000)</option>
+            <option value="3360000">부산강서구 (3360000)</option>
+            <option value="3350000">부산금정구 (3350000)</option>
+            <option value="3400000">부산기장군 (3400000)</option>
+            <option value="3310000">부산남구 (3310000)</option>
+            <option value="3270000">부산동구 (3270000)</option>
+            <option value="3300000">부산동래구 (3300000)</option>
+            <option value="3290000">부산부산진구 (3290000)</option>
+            <option value="3320000">부산북구 (3320000)</option>
+            <option value="3390000">부산사상구 (3390000)</option>
+            <option value="3340000">부산사하구 (3340000)</option>
+            <option value="3260000">부산서구 (3260000)</option>
+            <option value="3380000">부산수영구 (3380000)</option>
+            <option value="3370000">부산연제구 (3370000)</option>
+            <option value="3280000">부산영도구 (3280000)</option>
+            <option value="3250000">부산중구 (3250000)</option>
+            <option value="3330000">부산해운대구 (3330000)</option>
+            <option value="3220000">서울강남구 (3220000)</option>
+            <option value="3240000">서울강동구 (3240000)</option>
+            <option value="3080000">서울강북구 (3080000)</option>
+            <option value="3150000">서울강서구 (3150000)</option>
+            <option value="3200000">서울관악구 (3200000)</option>
+            <option value="3040000">서울광진구 (3040000)</option>
+            <option value="3160000">서울구로구 (3160000)</option>
+            <option value="3170000">서울금천구 (3170000)</option>
+            <option value="3100000">서울노원구 (3100000)</option>
+            <option value="3090000">서울도봉구 (3090000)</option>
+            <option value="3050000">서울동대문구 (3050000)</option>
+            <option value="3190000">서울동작구 (3190000)</option>
+            <option value="3130000">서울마포구 (3130000)</option>
+            <option value="3120000">서울서대문구 (3120000)</option>
+            <option value="3210000">서울서초구 (3210000)</option>
+            <option value="3030000">서울성동구 (3030000)</option>
+            <option value="3070000">서울성북구 (3070000)</option>
+            <option value="3230000">서울송파구 (3230000)</option>
+            <option value="3140000">서울양천구 (3140000)</option>
+            <option value="3180000">서울영등포구 (3180000)</option>
+            <option value="3020000">서울용산구 (3020000)</option>
+            <option value="3110000">서울은평구 (3110000)</option>
+            <option value="3000000">서울종로구 (3000000)</option>
+            <option value="3010000">서울중구 (3010000)</option>
+            <option value="3060000">서울중랑구 (3060000)</option>
+            <option value="3700000">울산남구 (3700000)</option>
+            <option value="3710000">울산동구 (3710000)</option>
+            <option value="3720000">울산북구 (3720000)</option>
+            <option value="3730000">울산울주군 (3730000)</option>
+            <option value="3690000">울산중구 (3690000)</option>
+            <option value="3570000">인천강화군 (3570000)</option>
+            <option value="3550000">인천계양구 (3550000)</option>
+            <option value="3530000">인천남동구 (3530000)</option>
+            <option value="3500000">인천동구 (3500000)</option>
+            <option value="3510500">인천미추홀구 (3510500)</option>
+            <option value="3540000">인천부평구 (3540000)</option>
+            <option value="3560000">인천서구 (3560000)</option>
+            <option value="3520000">인천연수구 (3520000)</option>
+            <option value="3580000">인천옹진군 (3580000)</option>
+            <option value="3490000">인천중구 (3490000)</option>
+            <option value="4920000">전남강진군 (4920000)</option>
+            <option value="4880000">전남고흥군 (4880000)</option>
+            <option value="4860000">전남곡성군 (4860000)</option>
+            <option value="4840000">전남광양시 (4840000)</option>
+            <option value="4870000">전남구례군 (4870000)</option>
+            <option value="4830000">전남나주시 (4830000)</option>
+            <option value="4850000">전남담양군 (4850000)</option>
+            <option value="4800000">전남목포시 (4800000)</option>
+            <option value="4950000">전남무안군 (4950000)</option>
+            <option value="4890000">전남보성군 (4890000)</option>
+            <option value="4820000">전남순천시 (4820000)</option>
+            <option value="5010000">전남신안군 (5010000)</option>
+            <option value="4810000">전남여수시 (4810000)</option>
+            <option value="4970000">전남영광군 (4970000)</option>
+            <option value="4940000">전남영암군 (4940000)</option>
+            <option value="4990000">전남완도군 (4990000)</option>
+            <option value="4980000">전남장성군 (4980000)</option>
+            <option value="4910000">전남장흥군 (4910000)</option>
+            <option value="5000000">전남진도군 (5000000)</option>
+            <option value="4960000">전남함평군 (4960000)</option>
+            <option value="4930000">전남해남군 (4930000)</option>
+            <option value="4900000">전남화순군 (4900000)</option>
+            <option value="4781000">전북고창군 (4781000)</option>
+            <option value="4671000">전북군산시 (4671000)</option>
+            <option value="4711000">전북김제시 (4711000)</option>
+            <option value="4701000">전북남원시 (4701000)</option>
+            <option value="4741000">전북무주군 (4741000)</option>
+            <option value="4791000">전북부안군 (4791000)</option>
+            <option value="4771000">전북순창군 (4771000)</option>
+            <option value="4721000">전북완주군 (4721000)</option>
+            <option value="4681000">전북익산시 (4681000)</option>
+            <option value="4761000">전북임실군 (4761000)</option>
+            <option value="4751000">전북장수군 (4751000)</option>
+            <option value="4641000">전북전주시 (4641000)</option>
+            <option value="4691000">전북정읍시 (4691000)</option>
+            <option value="4731000">전북진안군 (4731000)</option>
+            <option value="6520000">제주서귀포시 (6520000)</option>
+            <option value="6510000">제주제주시 (6510000)</option>
+            <option value="5580000">충남계룡시 (5580000)</option>
+            <option value="4500000">충남공주시 (4500000)</option>
+            <option value="4550000">충남금산군 (4550000)</option>
+            <option value="4540000">충남논산시 (4540000)</option>
+            <option value="5680000">충남당진시 (5680000)</option>
+            <option value="4510000">충남보령시 (4510000)</option>
+            <option value="4570000">충남부여군 (4570000)</option>
+            <option value="4530000">충남서산시 (4530000)</option>
+            <option value="4580000">충남서천군 (4580000)</option>
+            <option value="4520000">충남아산시 (4520000)</option>
+            <option value="4610000">충남예산군 (4610000)</option>
+            <option value="4490000">충남천안시 (4490000)</option>
+            <option value="4590000">충남청양군 (4590000)</option>
+            <option value="4620000">충남태안군 (4620000)</option>
+            <option value="4600000">충남홍성군 (4600000)</option>
+            <option value="4460000">충북괴산군 (4460000)</option>
+            <option value="4480000">충북단양군 (4480000)</option>
+            <option value="4420000">충북보은군 (4420000)</option>
+            <option value="4440000">충북영동군 (4440000)</option>
+            <option value="4430000">충북옥천군 (4430000)</option>
+            <option value="4470000">충북음성군 (4470000)</option>
+            <option value="4400000">충북제천시 (4400000)</option>
+            <option value="5570000">충북증평군 (5570000)</option>
+            <option value="4450000">충북진천군 (4450000)</option>
+            <option value="5710000">충북청주시 (5710000)</option>
+            <option value="4390000">충북충주시 (4390000)</option>
+          </select>
+          <div class="hint">목록에서 자치단체를 선택하면 코드가 자동 입력됩니다.</div>
+          <input id="opnCode" type="text" placeholder="선택: OPN_ATMY_GRP_CD" class="hidden-field-inline" />
+        </div>
+        <div class="field">
+          <label>필터 옵션</label>
+          <div class="checkrow"><input id="onlyActive" type="checkbox" checked /><label for="onlyActive">영업상태코드 01만 조회</label></div>
+        </div>
+        <div class="field">
+          <label>지역 API 필터</label>
+          <div class="checkrow"><input id="useApiRegion" type="checkbox" checked /><label for="useApiRegion">도로명주소 LIKE 조건 사용</label></div>
+        </div>
+        <div class="field wide">
+          <label for="proxyUrl">CORS 프록시 URL</label>
+          <input id="proxyUrl" type="text" placeholder="선택: https://내프록시.example.com/?url={url}" />
+          <div class="hint">브라우저에서 CORS 차단이 나올 때만 사용하세요. 프록시를 쓰면 키가 프록시 서버에 전달됩니다.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="fetchBtn" type="button">신규업장 조회</button>
+        <button id="stopBtn" type="button" class="ghost" disabled>조회 중지</button>
+        <button id="copyUrlBtn" type="button" class="secondary">1페이지 요청 URL 복사</button>
+        <button id="excelBtn" type="button" class="ghost" disabled>엑셀 다운로드</button>
+        <button id="downloadBtn" type="button" class="ghost" disabled>CSV 다운로드</button>
+        <button id="toggleKeyBtn" type="button" class="ghost">키 보기/숨기기</button>
+        <button id="resetBtn" type="button" class="ghost">기본값 복원</button>
+      </div>
+      <div id="status" class="status">지역을 입력하고 “신규업장 조회”를 누르세요. 정상 응답코드 0/00을 모두 허용하도록 수정된 버전입니다.</div>
+      <details>
+        <summary>전송되는 주요 API 조건 보기</summary>
+        <div class="notice">
+          인허가일자: <span class="mono">cond[LCPMT_YMD::GTE]</span>, <span class="mono">cond[LCPMT_YMD::LT]</span> ·
+          영업상태코드: <span class="mono">cond[SALS_STTS_CD::EQ]</span> ·
+          지역 도로명주소: <span class="mono">cond[ROAD_NM_ADDR::LIKE]</span> ·
+          개방자치단체코드: <span class="mono">cond[OPN_ATMY_GRP_CD::EQ]</span>
+        </div>
+      </details>
+    </section>
+
+    <section class="cards" aria-label="조회 요약">
+      <div class="card"><div class="k">조회 결과</div><div id="countCard" class="v">0</div><div class="s">중복 제거 후</div></div>
+      <div class="card"><div class="k">API 전체 건수</div><div id="apiCountCard" class="v">-</div><div class="s">응답 totalCount 기준</div></div>
+      <div class="card"><div class="k">조회 기간</div><div id="periodCard" class="v">-</div><div class="s">인허가일자 기준</div></div>
+      <div class="card"><div class="k">지역</div><div id="regionCard" class="v">-</div><div class="s">주소 키워드 기준</div></div>
+    </section>
+
+    <section class="panel" aria-labelledby="summary-title">
+      <div class="toolbar">
+        <h2 id="summary-title">지역별 요약</h2>
+      </div>
+      <div id="chips" class="chips"><span class="chip">조회 전</span></div>
+    </section>
+
+    <section class="panel" aria-labelledby="result-title">
+      <div class="toolbar">
+        <h2 id="result-title">신규업장 목록</h2>
+        <div class="filterbox">
+          <label for="quickFilter" class="sr-only">결과 내 검색</label>
+          <input id="quickFilter" type="search" placeholder="결과 내 검색: 업장명, 주소, 업태" />
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <colgroup>
+            <col style="width:52px">
+            <col style="width:108px">
+            <col style="width:180px">
+            <col style="width:130px">
+            <col style="width:90px">
+            <col style="width:300px">
+            <col style="width:300px">
+            <col style="width:110px">
+            <col style="width:150px">
+            <col style="width:150px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>인허가일자</th>
+              <th>사업장명</th>
+              <th>영업상태</th>
+              <th>업태</th>
+              <th>도로명주소</th>
+              <th>지번주소</th>
+              <th>전화</th>
+              <th>관리번호</th>
+              <th>갱신시점</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td class="empty" colspan="10">아직 조회한 데이터가 없습니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p id="tableNote" class="notice"></p>
+    </section>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+
+  const DEFAULT_SERVICE_KEY = 'e4e777321d676065d7ac4b59c33d70f467934f9d7c96e246c31ef0b1370ab923';
+  const DEFAULT_ENDPOINT = 'https://apis.data.go.kr/1741000/general_restaurants/info';
+  const MAX_RENDER_ROWS = 2000;
+
+  const FIELD = {
+    permitDate: ['LCPMT_YMD', 'LCPMTYMD', 'APV_PERM_YMD', 'APVPERMYMD', 'PERM_YMD', 'LCNS_DT', 'LICENSE_DATE', '인허가일자', '허가일자'],
+    name: ['BPLC_NM', 'BPLCNM', 'BPLC_NAME', 'SITE_NM', 'SITE_NAME', '사업장명', '업소명'],
+    status: ['SALS_STTS_NM', 'SALS_STTS_CD_NM', 'TRD_STATE_NM', 'TRDSTATENM', '영업상태명', '영업상태'],
+    statusCode: ['SALS_STTS_CD', 'TRD_STATE_GBN', 'TRDSTATEGBN', '영업상태코드'],
+    detailStatus: ['DTL_SALS_STTS_NM', 'DTL_STATE_NM', 'DTLSTATENM', '상세영업상태명', '상세상태'],
+    bizType: ['BIZCND_NM', 'UPTAE_NM', 'UPTAENM', '업태구분명', '업태명'],
+    roadAddr: ['ROAD_NM_ADDR', 'ROAD_NM_WHL_ADDR', 'RDNWHLADDR', 'RDN_WHL_ADDR', '도로명전체주소', '도로명주소'],
+    lotAddr: ['LOTNO_ADDR', 'SITE_ADDR', 'SITE_WHL_ADDR', 'SITEWHLADDR', '소재지전체주소', '지번주소'],
+    tel: ['TELNO', 'SITE_TELNO', 'SITETEL', 'PHONE', '소재지전화', '전화번호'],
+    mgtNo: ['MGT_NO', 'MGTNO', '관리번호'],
+    opnCode: ['OPN_ATMY_GRP_CD', 'OPNSFTEAMCODE', '개방자치단체코드'],
+    updatePoint: ['DAT_UPDT_PNT', 'LAST_MOD_TS', 'UPDATE_DT', '데이터갱신일자', '데이터갱신시점'],
+    x: ['X_CRDNT_VL', 'X', '좌표정보X'],
+    y: ['Y_CRDNT_VL', 'Y', '좌표정보Y']
+  };
+
+  const el = {
+    serviceKey: document.getElementById('serviceKey'),
+    endpoint: document.getElementById('endpoint'),
+    region: document.getElementById('region'),
+    startDate: document.getElementById('startDate'),
+    endDate: document.getElementById('endDate'),
+    perPage: document.getElementById('perPage'),
+    maxPages: document.getElementById('maxPages'),
+    businessName: document.getElementById('businessName'),
+    opnCode: document.getElementById('opnCode'),
+    onlyActive: document.getElementById('onlyActive'),
+    useApiRegion: document.getElementById('useApiRegion'),
+    proxyUrl: document.getElementById('proxyUrl'),
+    fetchBtn: document.getElementById('fetchBtn'),
+    stopBtn: document.getElementById('stopBtn'),
+    copyUrlBtn: document.getElementById('copyUrlBtn'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    excelBtn: document.getElementById('excelBtn'),
+    toggleKeyBtn: document.getElementById('toggleKeyBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    status: document.getElementById('status'),
+    countCard: document.getElementById('countCard'),
+    apiCountCard: document.getElementById('apiCountCard'),
+    periodCard: document.getElementById('periodCard'),
+    regionCard: document.getElementById('regionCard'),
+    chips: document.getElementById('chips'),
+    tbody: document.getElementById('tbody'),
+    tableNote: document.getElementById('tableNote'),
+    quickFilter: document.getElementById('quickFilter')
+  };
+
+  const OPN_CODE_OPTIONS = [
+    ['서울특별시 전체', '6110000_ALL'],
+    ['부산광역시 전체', '6260000_ALL'],
+    ['대구광역시 전체', '6270000_ALL'],
+    ['인천광역시 전체', '6280000_ALL'],
+    ['광주광역시 전체', '6290000_ALL'],
+    ['대전광역시 전체', '6300000_ALL'],
+    ['울산광역시 전체', '6310000_ALL'],
+    ['세종특별자치시 전체', '5690000_ALL'],
+    ['경기도 전체', '6410000_ALL'],
+    ['강원특별자치도 전체', '6530000_ALL'],
+    ['충청북도 전체', '6430000_ALL'],
+    ['충청남도 전체', '6440000_ALL'],
+    ['전북특별자치도 전체', '6540000_ALL'],
+    ['전라남도 전체', '6460000_ALL'],
+    ['경상북도 전체', '6470000_ALL'],
+    ['경상남도 전체', '6480000_ALL'],
+    ['제주특별자치도 전체', '6500000_ALL'],
+    ['경기도', '6410000'],
+    ['경상남도', '6480000'],
+    ['경상북도', '6470000'],
+    ['광주광역시', '6290000'],
+    ['대구광역시', '6270000'],
+    ['대전광역시', '6300000'],
+    ['부산광역시', '6260000'],
+    ['서울특별시', '6110000'],
+    ['울산광역시', '6310000'],
+    ['인천광역시', '6280000'],
+    ['전라남도', '6460000'],
+    ['전북특별자치도', '6540000'],
+    ['제주도', '6500000'],
+    ['충청남도', '6440000'],
+    ['충청북도', '6430000'],
+    ['세종특별자치시', '5690000'],
+    ['강원강릉시', '4201000'],
+    ['강원고성군', '4341000'],
+    ['강원동해시', '4211000'],
+    ['강원삼척시', '4241000'],
+    ['강원속초시', '4231000'],
+    ['강원양구군', '4321000'],
+    ['강원양양군', '4351000'],
+    ['강원영월군', '4271000'],
+    ['강원원주시', '4191000'],
+    ['강원인제군', '4331000'],
+    ['강원정선군', '4291000'],
+    ['강원철원군', '4301000'],
+    ['강원춘천시', '4181000'],
+    ['강원태백시', '4221000'],
+    ['강원평창군', '4281000'],
+    ['강원홍천군', '4251000'],
+    ['강원화천군', '4311000'],
+    ['강원횡성군', '4261000'],
+    ['경기가평군', '4160000'],
+    ['경기고양시', '3940000'],
+    ['경기과천시', '3970000'],
+    ['경기광명시', '3900000'],
+    ['경기광주시', '5540000'],
+    ['경기구리시', '3980000'],
+    ['경기군포시', '4020000'],
+    ['경기김포시', '4090000'],
+    ['경기남양주시', '3990000'],
+    ['경기동두천시', '3920000'],
+    ['경기부천시', '3860000'],
+    ['경기성남시', '3780000'],
+    ['경기수원시', '3740000'],
+    ['경기시흥시', '4010000'],
+    ['경기안산시', '3930000'],
+    ['경기안성시', '4080000'],
+    ['경기안양시', '3830000'],
+    ['경기양주시', '5590000'],
+    ['경기양평군', '4170000'],
+    ['경기여주시', '5700000'],
+    ['경기연천군', '4140000'],
+    ['경기오산시', '4000000'],
+    ['경기용인시', '4050000'],
+    ['경기의왕시', '4030000'],
+    ['경기의정부시', '3820000'],
+    ['경기이천시', '4070000'],
+    ['경기파주시', '4060000'],
+    ['경기평택시', '3910000'],
+    ['경기포천시', '5600000'],
+    ['경기하남시', '4040000'],
+    ['경기화성시', '5530000'],
+    ['경남거제시', '5370000'],
+    ['경남거창군', '5470000'],
+    ['경남고성군', '5420000'],
+    ['경남김해시', '5350000'],
+    ['경남남해군', '5430000'],
+    ['경남밀양시', '5360000'],
+    ['경남사천시', '5340000'],
+    ['경남산청군', '5450000'],
+    ['경남양산시', '5380000'],
+    ['경남의령군', '5390000'],
+    ['경남진주시', '5310000'],
+    ['경남창녕군', '5410000'],
+    ['경남창원시', '5670000'],
+    ['경남통영시', '5330000'],
+    ['경남하동군', '5440000'],
+    ['경남함안군', '5400000'],
+    ['경남함양군', '5460000'],
+    ['경남합천군', '5480000'],
+    ['경북경산시', '5130000'],
+    ['경북경주시', '5050000'],
+    ['경북고령군', '5200000'],
+    ['경북구미시', '5080000'],
+    ['경북김천시', '5060000'],
+    ['경북문경시', '5120000'],
+    ['경북봉화군', '5240000'],
+    ['경북상주시', '5110000'],
+    ['경북성주군', '5210000'],
+    ['경북안동시', '5070000'],
+    ['경북영덕군', '5180000'],
+    ['경북영양군', '5170000'],
+    ['경북영주시', '5090000'],
+    ['경북영천시', '5100000'],
+    ['경북예천군', '5230000'],
+    ['경북울릉군', '5260000'],
+    ['경북울진군', '5250000'],
+    ['경북의성군', '5150000'],
+    ['경북청도군', '5190000'],
+    ['경북청송군', '5160000'],
+    ['경북칠곡군', '5220000'],
+    ['경북포항시', '5020000'],
+    ['광주광산구', '3630000'],
+    ['광주남구', '3610000'],
+    ['광주동구', '3590000'],
+    ['광주북구', '3620000'],
+    ['광주서구', '3600000'],
+    ['대구군위군', '5141000'],
+    ['대구남구', '3440000'],
+    ['대구달서구', '3470000'],
+    ['대구달성군', '3480000'],
+    ['대구동구', '3420000'],
+    ['대구북구', '3450000'],
+    ['대구서구', '3430000'],
+    ['대구수성구', '3460000'],
+    ['대구중구', '3410000'],
+    ['대전대덕구', '3680000'],
+    ['대전동구', '3640000'],
+    ['대전서구', '3660000'],
+    ['대전유성구', '3670000'],
+    ['대전중구', '3650000'],
+    ['부산강서구', '3360000'],
+    ['부산금정구', '3350000'],
+    ['부산기장군', '3400000'],
+    ['부산남구', '3310000'],
+    ['부산동구', '3270000'],
+    ['부산동래구', '3300000'],
+    ['부산부산진구', '3290000'],
+    ['부산북구', '3320000'],
+    ['부산사상구', '3390000'],
+    ['부산사하구', '3340000'],
+    ['부산서구', '3260000'],
+    ['부산수영구', '3380000'],
+    ['부산연제구', '3370000'],
+    ['부산영도구', '3280000'],
+    ['부산중구', '3250000'],
+    ['부산해운대구', '3330000'],
+    ['서울강남구', '3220000'],
+    ['서울강동구', '3240000'],
+    ['서울강북구', '3080000'],
+    ['서울강서구', '3150000'],
+    ['서울관악구', '3200000'],
+    ['서울광진구', '3040000'],
+    ['서울구로구', '3160000'],
+    ['서울금천구', '3170000'],
+    ['서울노원구', '3100000'],
+    ['서울도봉구', '3090000'],
+    ['서울동대문구', '3050000'],
+    ['서울동작구', '3190000'],
+    ['서울마포구', '3130000'],
+    ['서울서대문구', '3120000'],
+    ['서울서초구', '3210000'],
+    ['서울성동구', '3030000'],
+    ['서울성북구', '3070000'],
+    ['서울송파구', '3230000'],
+    ['서울양천구', '3140000'],
+    ['서울영등포구', '3180000'],
+    ['서울용산구', '3020000'],
+    ['서울은평구', '3110000'],
+    ['서울종로구', '3000000'],
+    ['서울중구', '3010000'],
+    ['서울중랑구', '3060000'],
+    ['울산남구', '3700000'],
+    ['울산동구', '3710000'],
+    ['울산북구', '3720000'],
+    ['울산울주군', '3730000'],
+    ['울산중구', '3690000'],
+    ['인천강화군', '3570000'],
+    ['인천계양구', '3550000'],
+    ['인천남동구', '3530000'],
+    ['인천동구', '3500000'],
+    ['인천미추홀구', '3510500'],
+    ['인천부평구', '3540000'],
+    ['인천서구', '3560000'],
+    ['인천연수구', '3520000'],
+    ['인천옹진군', '3580000'],
+    ['인천중구', '3490000'],
+    ['전남강진군', '4920000'],
+    ['전남고흥군', '4880000'],
+    ['전남곡성군', '4860000'],
+    ['전남광양시', '4840000'],
+    ['전남구례군', '4870000'],
+    ['전남나주시', '4830000'],
+    ['전남담양군', '4850000'],
+    ['전남목포시', '4800000'],
+    ['전남무안군', '4950000'],
+    ['전남보성군', '4890000'],
+    ['전남순천시', '4820000'],
+    ['전남신안군', '5010000'],
+    ['전남여수시', '4810000'],
+    ['전남영광군', '4970000'],
+    ['전남영암군', '4940000'],
+    ['전남완도군', '4990000'],
+    ['전남장성군', '4980000'],
+    ['전남장흥군', '4910000'],
+    ['전남진도군', '5000000'],
+    ['전남함평군', '4960000'],
+    ['전남해남군', '4930000'],
+    ['전남화순군', '4900000'],
+    ['전북고창군', '4781000'],
+    ['전북군산시', '4671000'],
+    ['전북김제시', '4711000'],
+    ['전북남원시', '4701000'],
+    ['전북무주군', '4741000'],
+    ['전북부안군', '4791000'],
+    ['전북순창군', '4771000'],
+    ['전북완주군', '4721000'],
+    ['전북익산시', '4681000'],
+    ['전북임실군', '4761000'],
+    ['전북장수군', '4751000'],
+    ['전북전주시', '4641000'],
+    ['전북정읍시', '4691000'],
+    ['전북진안군', '4731000'],
+    ['제주서귀포시', '6520000'],
+    ['제주제주시', '6510000'],
+    ['충남계룡시', '5580000'],
+    ['충남공주시', '4500000'],
+    ['충남금산군', '4550000'],
+    ['충남논산시', '4540000'],
+    ['충남당진시', '5680000'],
+    ['충남보령시', '4510000'],
+    ['충남부여군', '4570000'],
+    ['충남서산시', '4530000'],
+    ['충남서천군', '4580000'],
+    ['충남아산시', '4520000'],
+    ['충남예산군', '4610000'],
+    ['충남천안시', '4490000'],
+    ['충남청양군', '4590000'],
+    ['충남태안군', '4620000'],
+    ['충남홍성군', '4600000'],
+    ['충북괴산군', '4460000'],
+    ['충북단양군', '4480000'],
+    ['충북보은군', '4420000'],
+    ['충북영동군', '4440000'],
+    ['충북옥천군', '4430000'],
+    ['충북음성군', '4470000'],
+    ['충북제천시', '4400000'],
+    ['충북증평군', '5570000'],
+    ['충북진천군', '4450000'],
+    ['충북청주시', '5710000'],
+    ['충북충주시', '4390000']
+  ];
+
+  function initOpnCodeSelect() {
+    const select = document.getElementById('opnCodeSelect');
+    if (!select) return;
+    if (select.options.length <= 1) { select.innerHTML = '<option value="">자치단체 선택</option>' + OPN_CODE_OPTIONS.map(function(item) { return '<option value="' + item[1] + '">' + item[0] + ' (' + item[1] + ')</option>'; }).join(''); }
+    const savedCode = safeLocalStorageGet('gr_opn_code') || el.opnCode.value.trim();
+    if (savedCode) {
+      el.opnCode.value = savedCode;
+      select.value = savedCode;
+    }
+    select.addEventListener('change', function() {
+      el.opnCode.value = select.value;
+      if (select.value) {
+        el.region.value = '';
+        el.businessName.value = '';
+        el.quickFilter.value = '';
+      }
+      safeLocalStorageSet('gr_opn_code', select.value);
+      saveSettings();
+      updateCards();
+      updateChips();
+      renderTable();
+    });
+    el.opnCode.addEventListener('input', function() {
+      const code = el.opnCode.value.trim();
+      select.value = OPN_CODE_OPTIONS.some(function(item) { return item[1] === code; }) ? code : "";
+      safeLocalStorageSet('gr_opn_code', code);
+      saveSettings();
+    });
+  }
+
+  let currentRows = [];
+  let stopRequested = false;
+  let currentTotalCount = null;
+  let lastRequestUrl = '';
+
+  function safeLocalStorageGet(key) {
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  }
+  function safeLocalStorageSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (_) { /* ignore */ }
+  }
+  function fmtNum(n) {
+    if (n === null || n === undefined || n === '') return '-';
+    const num = Number(n);
+    return Number.isFinite(num) ? num.toLocaleString('ko-KR') : String(n);
+  }
+  function addDays(dateOrIso, days) {
+    const d = typeof dateOrIso === 'string' ? new Date(dateOrIso + 'T00:00:00') : new Date(dateOrIso);
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+  function toIsoDate(date) {
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function compactDate(iso) {
+    return String(iso || '').replace(/\D/g, '').slice(0, 8);
+  }
+  function compactEndExclusive(isoEnd) {
+    return compactDate(toIsoDate(addDays(isoEnd, 1)));
+  }
+  function normalizeDate(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length >= 8) return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+    return String(value ?? '').trim();
+  }
+  function comparableDate(value) {
+    return String(value ?? '').replace(/\D/g, '').slice(0, 8);
+  }
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  }
+  function getValue(row, keys, fallback = '') {
+    if (!row || typeof row !== 'object') return fallback;
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(row, key) && row[key] !== null && row[key] !== undefined && String(row[key]).trim() !== '') return row[key];
+    }
+    const lower = new Map(Object.keys(row).map(k => [k.toLowerCase(), k]));
+    for (const key of keys) {
+      const real = lower.get(String(key).toLowerCase());
+      if (real && row[real] !== null && row[real] !== undefined && String(row[real]).trim() !== '') return row[real];
+    }
+    return fallback;
+  }
+  function getAddress(row) {
+    const road = getValue(row, FIELD.roadAddr);
+    const lot = getValue(row, FIELD.lotAddr);
+    return [road, lot].filter(Boolean).join(' ');
+  }
+  function selectedOpnCode() {
+    const select = document.getElementById('opnCodeSelect');
+    return (select && select.value ? select.value : el.opnCode.value).trim();
+  }
+  function selectedOpnLabel() {
+    const select = document.getElementById('opnCodeSelect');
+    if (select && select.value) return (select.options[select.selectedIndex]?.text || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const code = el.opnCode.value.trim();
+    const found = OPN_CODE_OPTIONS.find(item => item[1] === code);
+    return found ? found[0] : '';
+  }
+  function codeFamilyPrefix(label) {
+    const clean = String(label || '').replace(/\s*전체$/, '').trim();
+    const provinceMap = {
+      '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구', '인천광역시': '인천', '광주광역시': '광주',
+      '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종', '경기도': '경기', '강원특별자치도': '강원',
+      '충청북도': '충북', '충청남도': '충남', '전북특별자치도': '전북', '전라남도': '전남',
+      '경상북도': '경북', '경상남도': '경남', '제주도': '제주', '제주특별자치도': '제주'
+    };
+    return provinceMap[clean] || clean;
+  }
+  function selectedAllowedCodes() {
+    const code = selectedOpnCode();
+    if (!code) return null;
+    const label = selectedOpnLabel();
+    if (!code.endsWith('_ALL')) return new Set([code]);
+    const prefix = codeFamilyPrefix(label);
+    const baseLabel = label.replace(/\s*전체$/, '').trim();
+    return new Set(OPN_CODE_OPTIONS.filter(item => item[0] === baseLabel || item[0].startsWith(prefix)).map(item => item[1]));
+  }
+  function addressKeywordFromOpnLabel(label) {
+    const clean = String(label || '').replace(/\s*전체$/, '').trim();
+    if (!clean) return '';
+    const direct = {
+      '서울특별시': '서울특별시', '부산광역시': '부산광역시', '대구광역시': '대구광역시', '인천광역시': '인천광역시',
+      '광주광역시': '광주광역시', '대전광역시': '대전광역시', '울산광역시': '울산광역시', '세종특별자치시': '세종특별자치시',
+      '경기도': '경기도', '강원특별자치도': '강원특별자치도', '충청북도': '충청북도', '충청남도': '충청남도',
+      '전북특별자치도': '전북특별자치도', '전라남도': '전라남도', '경상북도': '경상북도', '경상남도': '경상남도',
+      '제주도': '제주', '제주특별자치도': '제주'
+    };
+    if (direct[clean]) return direct[clean];
+    const prefixes = [
+      ['서울', '서울특별시 '], ['부산', '부산광역시 '], ['대구', '대구광역시 '], ['인천', '인천광역시 '], ['광주', '광주광역시 '],
+      ['대전', '대전광역시 '], ['울산', '울산광역시 '], ['경기', '경기도 '], ['강원', '강원특별자치도 '],
+      ['경남', '경상남도 '], ['경북', '경상북도 '], ['전남', '전라남도 '], ['전북', '전북특별자치도 '],
+      ['충남', '충청남도 '], ['충북', '충청북도 '], ['제주', '제주']
+    ];
+    for (const [prefix, full] of prefixes) {
+      if (clean.startsWith(prefix) && clean.length > prefix.length) return full + clean.slice(prefix.length);
+    }
+    return clean;
+  }
+  function rowMatchesSelectedOpnCode(row) {
+    const code = selectedOpnCode();
+    if (!code) return true;
+    const label = selectedOpnLabel();
+    const keyword = addressKeywordFromOpnLabel(label).toLowerCase();
+    return keyword ? getAddress(row).toLowerCase().includes(keyword) : true;
+  }
+
+  function regionLabelFromAddress(addr) {
+    const parts = String(addr || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '주소없음';
+    if (parts[0].endsWith('특별시') || parts[0].endsWith('광역시') || parts[0] === '세종특별자치시') {
+      return parts.slice(0, 2).join(' ') || parts[0];
+    }
+    if (parts[0].endsWith('도') && parts.length >= 2) return parts.slice(0, 2).join(' ');
+    return parts.slice(0, 2).join(' ');
+  }
+  function uniqueKey(row) {
+    return String(getValue(row, FIELD.mgtNo) || [getValue(row, FIELD.name), getAddress(row), getValue(row, FIELD.permitDate)].join('|'));
+  }
+  function dedupe(rows) {
+    const map = new Map();
+    for (const row of rows) {
+      const key = uniqueKey(row);
+      if (!map.has(key)) map.set(key, row);
+    }
+    return Array.from(map.values());
+  }
+  function asArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'object') {
+      for (const key of ['item', 'items', 'row', 'rows', 'data', 'list']) {
+        if (Array.isArray(value[key])) return value[key];
+        if (value[key] && typeof value[key] === 'object' && !Array.isArray(value[key])) return [value[key]];
+      }
+      // 응답이 1건일 때 item/items가 배열이 아니라 행 객체 하나로 내려오는 경우까지 처리합니다.
+      return Object.keys(value).length ? [value] : [];
+    }
+    return [];
+  }
+  const SUCCESS_RESULT_CODES = new Set(['0', '00', '000', '0000', 'NORMAL_CODE', 'INFO-000', 'OK', 'SUCCESS']);
+  const API_CODE_KEYS = ['resultCode', 'RESULT_CODE', 'resultCd', 'returnReasonCode', 'code', 'CODE', 'errCode', 'ERROR_CODE'];
+  const API_MSG_KEYS = ['resultMsg', 'RESULT_MSG', 'resultMessage', 'returnAuthMsg', 'errMsg', 'message', 'MESSAGE', 'ERROR_MSG'];
+  const TOTAL_COUNT_KEYS = ['totalCount', 'totalCnt', 'totalcount', 'list_total_count', 'total_count', 'total'];
+  const ROW_KEY_SET = new Set(Object.values(FIELD).flat().map(key => String(key).toLowerCase()));
+
+  function getCaseInsensitive(obj, keys) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return undefined;
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
+    }
+    const lower = new Map(Object.keys(obj).map(k => [k.toLowerCase(), k]));
+    for (const key of keys) {
+      const real = lower.get(String(key).toLowerCase());
+      if (real !== undefined) return obj[real];
+    }
+    return undefined;
+  }
+  function isSuccessCode(code, msg = '') {
+    const message = String(msg || '').trim();
+    const hasBadMessage = /오류|에러|실패|인증.*실패|등록되지|SERVICE\s*KEY|ERROR|FAIL|INVALID|EXPIRED|DENIED/i.test(message);
+    const hasGoodMessage = /정상|성공|NORMAL|SUCCESS|OK/i.test(message);
+    if (code === undefined || code === null || String(code).trim() === '') return !hasBadMessage;
+
+    const raw = String(code).trim();
+    const upper = raw.toUpperCase();
+    if (SUCCESS_RESULT_CODES.has(upper)) return !hasBadMessage;
+    if (/^0+$/.test(raw)) return !hasBadMessage;
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber) && asNumber === 0) return !hasBadMessage;
+    return hasGoodMessage && !hasBadMessage;
+  }
+  function looksLikeDataRow(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+    const keys = Object.keys(obj).map(k => k.toLowerCase());
+    return keys.some(k => ROW_KEY_SET.has(k));
+  }
+  function findApiHeader(data) {
+    const direct = [
+      data?.response?.header,
+      data?.header,
+      data?.result,
+      data?.RESULT,
+      data?.OpenAPI_ServiceResponse?.cmmMsgHeader
+    ];
+    for (const candidate of direct) {
+      if (candidate && typeof candidate === 'object') return candidate;
+    }
+
+    const seen = new WeakSet();
+    const queue = [{ value: data, depth: 0 }];
+    while (queue.length) {
+      const { value, depth } = queue.shift();
+      if (!value || typeof value !== 'object' || depth > 8) continue;
+      if (seen.has(value)) continue;
+      seen.add(value);
+      if (!Array.isArray(value)) {
+        const code = getCaseInsensitive(value, API_CODE_KEYS);
+        const msg = getCaseInsensitive(value, API_MSG_KEYS);
+        if (code !== undefined || msg !== undefined) return value;
+      }
+      for (const child of Object.values(value)) {
+        if (child && typeof child === 'object') queue.push({ value: child, depth: depth + 1 });
+      }
+    }
+    return null;
+  }
+  function findFirstValueByKeys(data, keys) {
+    const seen = new WeakSet();
+    const queue = [{ value: data, depth: 0 }];
+    while (queue.length) {
+      const { value, depth } = queue.shift();
+      if (!value || typeof value !== 'object' || depth > 8) continue;
+      if (seen.has(value)) continue;
+      seen.add(value);
+      if (!Array.isArray(value)) {
+        const found = getCaseInsensitive(value, keys);
+        if (found !== undefined && found !== null && found !== '') return found;
+      }
+      for (const child of Object.values(value)) {
+        if (child && typeof child === 'object') queue.push({ value: child, depth: depth + 1 });
+      }
+    }
+    return undefined;
+  }
+  function findRowArrays(data) {
+    const candidates = [];
+    const seen = new WeakSet();
+    const queue = [{ value: data, depth: 0 }];
+    while (queue.length) {
+      const { value, depth } = queue.shift();
+      if (!value || typeof value !== 'object' || depth > 8) continue;
+      if (seen.has(value)) continue;
+      seen.add(value);
+      if (Array.isArray(value)) {
+        const objectRows = value.filter(v => v && typeof v === 'object' && !Array.isArray(v));
+        if (objectRows.length && objectRows.some(looksLikeDataRow)) candidates.push(objectRows);
+        objectRows.forEach(v => queue.push({ value: v, depth: depth + 1 }));
+        continue;
+      }
+      for (const key of ['item', 'items', 'row', 'rows', 'data', 'list']) {
+        const arr = asArray(value[key]);
+        if (arr.length && arr.some(looksLikeDataRow)) candidates.push(arr);
+      }
+      for (const child of Object.values(value)) {
+        if (child && typeof child === 'object') queue.push({ value: child, depth: depth + 1 });
+      }
+    }
+    candidates.sort((a, b) => b.length - a.length);
+    return candidates;
+  }
+  function extractItems(data) {
+    const paths = [
+      data?.response?.body?.items?.item,
+      data?.response?.body?.items,
+      data?.response?.body?.item,
+      data?.response?.body?.row,
+      data?.body?.items?.item,
+      data?.body?.items,
+      data?.body?.item,
+      data?.body?.row,
+      data?.items?.item,
+      data?.items,
+      data?.row,
+      data?.rows,
+      data?.data,
+      data?.list
+    ];
+    for (const p of paths) {
+      const arr = asArray(p);
+      if (arr.length && arr.some(looksLikeDataRow)) return arr;
+    }
+    return findRowArrays(data)[0] || [];
+  }
+  function extractTotalCount(data) {
+    const candidates = [
+      data?.response?.body?.totalCount,
+      data?.response?.body?.totalCnt,
+      data?.response?.body?.totalcount,
+      data?.response?.totalCount,
+      data?.body?.totalCount,
+      data?.body?.totalCnt,
+      data?.body?.totalcount,
+      data?.totalCount,
+      data?.totalCnt,
+      data?.totalcount,
+      data?.count,
+      data?.list_total_count,
+      findFirstValueByKeys(data, TOTAL_COUNT_KEYS)
+    ];
+    for (const value of candidates) {
+      if (value !== undefined && value !== null && value !== '') return Number(value);
+    }
+    return null;
+  }
+  function checkApiError(data) {
+    const header = findApiHeader(data);
+    if (!header) return;
+    const code = getCaseInsensitive(header, API_CODE_KEYS);
+    const msg = getCaseInsensitive(header, API_MSG_KEYS);
+    if (!isSuccessCode(code, msg)) {
+      throw new Error(`API 오류 ${code ?? ''}: ${msg || '상세 메시지 없음'}`);
+    }
+  }
+  function xmlTextToData(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const parseError = doc.querySelector('parsererror');
+    if (parseError) throw new Error('XML 응답 파싱 실패: ' + parseError.textContent.slice(0, 240));
+    const errorText = doc.querySelector('returnAuthMsg, resultMsg, RESULT_MSG, errMsg, message, MESSAGE')?.textContent?.trim() || '';
+    const resultCode = doc.querySelector('returnReasonCode, resultCode, RESULT_CODE, code, CODE')?.textContent?.trim() || '';
+    const itemNodes = Array.from(doc.querySelectorAll('item, row'));
+    const items = itemNodes.map(node => {
+      const obj = {};
+      Array.from(node.children).forEach(child => { obj[child.tagName] = child.textContent.trim(); });
+      return obj;
+    });
+    const totalCount = doc.querySelector('totalCount, totalCnt, list_total_count')?.textContent?.trim() || '';
+    if (!isSuccessCode(resultCode, errorText)) throw new Error(`API 응답: ${resultCode ? resultCode + ' - ' : ''}${errorText || '상세 메시지 없음'}`);
+    return { response: { header: { resultCode: resultCode || '0', resultMsg: errorText || '정상' }, body: { totalCount, items } } };
+  }
+
+  async function fetchData(url) {
+    const fetchUrl = applyProxy(url);
+    const res = await fetch(fetchUrl, { method: 'GET' });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 300)}`);
+    let data;
+    const trimmed = text.trim();
+    if (trimmed.startsWith('<')) {
+      data = xmlTextToData(trimmed);
+    } else {
+      try { data = JSON.parse(trimmed); }
+      catch (err) { throw new Error('JSON 파싱 실패: ' + trimmed.slice(0, 300)); }
+      if (data && typeof data.contents === 'string') {
+        const contents = data.contents.trim();
+        data = contents.startsWith('<') ? xmlTextToData(contents) : JSON.parse(contents);
+      }
+    }
+    checkApiError(data);
+    return data;
+  }
+  function applyProxy(url) {
+    const proxy = el.proxyUrl.value.trim();
+    if (!proxy) return url;
+    if (proxy.includes('{url}')) return proxy.replace('{url}', encodeURIComponent(url));
+    return proxy + encodeURIComponent(url);
+  }
+  function normalizeEndpoint(url) {
+    const trimmed = String(url || '').trim().replace(/\/+$/, '');
+    // data.go.kr 화면의 Service URL만 붙여 넣어도 실제 조회용 Requested Link로 보정합니다.
+    if (/\/1741000\/general_restaurants$/i.test(trimmed)) return trimmed + '/info';
+    return trimmed || DEFAULT_ENDPOINT;
+  }
+  function buildUrl(pageNo = 1) {
+    const key = el.serviceKey.value.trim();
+    if (!key) throw new Error('API 인증키를 입력하세요.');
+    if (!el.startDate.value || !el.endDate.value) throw new Error('시작일과 종료일을 입력하세요.');
+    if (compactDate(el.startDate.value) > compactDate(el.endDate.value)) throw new Error('시작일은 종료일보다 늦을 수 없습니다.');
+
+    const endpoint = normalizeEndpoint(el.endpoint.value);
+    el.endpoint.value = endpoint;
+    const params = new URLSearchParams();
+    params.set('serviceKey', key);
+    params.set('pageNo', String(pageNo));
+    params.set('numOfRows', String(Math.max(1, Math.min(100, Number(el.perPage.value) || 100))));
+    params.set('returnType', 'json');
+    params.set('cond[LCPMT_YMD::GTE]', compactDate(el.startDate.value));
+    params.set('cond[LCPMT_YMD::LT]', compactEndExclusive(el.endDate.value));
+
+    const opnCode = selectedOpnCode();
+    const opnKeyword = opnCode ? addressKeywordFromOpnLabel(selectedOpnLabel()) : '';
+    const region = opnCode ? opnKeyword : el.region.value.trim();
+    const businessName = el.businessName.value.trim();
+    if (el.onlyActive.checked) params.set('cond[SALS_STTS_CD::EQ]', '01');
+    if (businessName) params.set('cond[BPLC_NM::LIKE]', businessName);
+    if (region && el.useApiRegion.checked) params.set('cond[ROAD_NM_ADDR::LIKE]', region);
+    return endpoint + '?' + params.toString();
+  }
+  function rowMatchesClientFilters(row) {
+    const start = compactDate(el.startDate.value);
+    const end = compactDate(el.endDate.value);
+    const permit = comparableDate(getValue(row, FIELD.permitDate));
+    if (permit && (permit < start || permit > end)) return false;
+
+    const region = selectedOpnCode() ? '' : el.region.value.trim().toLowerCase();
+    if (region) {
+      const address = getAddress(row).toLowerCase();
+      if (!address.includes(region)) return false;
+    }
+    const businessName = el.businessName.value.trim().toLowerCase();
+    if (businessName && !String(getValue(row, FIELD.name)).toLowerCase().includes(businessName)) return false;
+    if (!rowMatchesSelectedOpnCode(row)) return false;
+    return true;
+  }
+  function applyClientFilters(rows) {
+    const stats = {
+      received: rows.length,
+      afterDate: 0,
+      afterRegion: 0,
+      afterName: 0,
+      afterCode: 0
+    };
+    const start = compactDate(el.startDate.value);
+    const end = compactDate(el.endDate.value);
+    const region = selectedOpnCode() ? '' : el.region.value.trim().toLowerCase();
+    const businessName = el.businessName.value.trim().toLowerCase();
+    const result = [];
+    for (const row of rows) {
+      const permit = comparableDate(getValue(row, FIELD.permitDate));
+      if (permit && (permit < start || permit > end)) continue;
+      stats.afterDate += 1;
+
+      if (region && !getAddress(row).toLowerCase().includes(region)) continue;
+      stats.afterRegion += 1;
+
+      if (businessName && !String(getValue(row, FIELD.name)).toLowerCase().includes(businessName)) continue;
+      stats.afterName += 1;
+
+      if (!rowMatchesSelectedOpnCode(row)) continue;
+      stats.afterCode += 1;
+      result.push(row);
+    }
+    return { rows: result, stats };
+  }
+  function filterStatusText(stats) {
+    if (!stats || stats.afterCode > 0) return '';
+    const parts = [
+      `중복 제거 후 ${fmtNum(stats.received)}건`,
+      `기간 통과 ${fmtNum(stats.afterDate)}건`,
+      `지역/주소 통과 ${fmtNum(stats.afterRegion)}건`,
+      `업장명 통과 ${fmtNum(stats.afterName)}건`,
+      `선택 자치단체 코드 통과 ${fmtNum(stats.afterCode)}건`
+    ];
+    return ` 필터 단계: ${parts.join(' -> ')}. 업장명 포함 또는 지역 키워드가 남아 있으면 결과가 0건이 될 수 있습니다.`;
+  }
+  function sortRows(rows) {
+    return rows.sort((a, b) => {
+      const bd = comparableDate(getValue(b, FIELD.permitDate));
+      const ad = comparableDate(getValue(a, FIELD.permitDate));
+      if (bd !== ad) return bd.localeCompare(ad);
+      return String(getValue(a, FIELD.name)).localeCompare(String(getValue(b, FIELD.name)), 'ko');
+    });
+  }
+  function updateCards() {
+    el.countCard.textContent = fmtNum(currentRows.length);
+    el.apiCountCard.textContent = fmtNum(currentTotalCount);
+    const period = `${normalizeDate(el.startDate.value)} ~ ${normalizeDate(el.endDate.value)}`;
+    el.periodCard.textContent = period;
+    el.regionCard.textContent = selectedOpnLabel() || el.region.value.trim() || '전체';
+  }
+  function updateChips() {
+    if (!currentRows.length) {
+      el.chips.innerHTML = '<span class="chip">결과 없음</span>';
+      return;
+    }
+    const counts = new Map();
+    for (const row of currentRows) {
+      const label = regionLabelFromAddress(getAddress(row));
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 30);
+    const activeKeyword = el.quickFilter.value.trim();
+    el.chips.innerHTML = top.map(([label, count]) => {
+      const isActive = activeKeyword && activeKeyword === label;
+      return `<button type="button" class="chip${isActive ? ' active' : ''}" data-region="${escapeHtml(label)}">${escapeHtml(label)} <strong>${fmtNum(count)}</strong></button>`;
+    }).join('');
+  }
+  function onChipClick(e) {
+    const btn = e.target.closest('button.chip[data-region]');
+    if (!btn) return;
+    const region = btn.dataset.region;
+    const isActive = btn.classList.contains('active');
+    el.quickFilter.value = isActive ? '' : region;
+    renderTable();
+    updateChips();
+  }
+  function normalizedRow(row, idx) {
+    const status = [getValue(row, FIELD.status), getValue(row, FIELD.detailStatus)].filter(Boolean).join(' / ');
+    return {
+      No: idx + 1,
+      인허가일자: normalizeDate(getValue(row, FIELD.permitDate)),
+      사업장명: getValue(row, FIELD.name),
+      영업상태: status || getValue(row, FIELD.statusCode),
+      영업상태코드: getValue(row, FIELD.statusCode),
+      업태: getValue(row, FIELD.bizType),
+      도로명주소: getValue(row, FIELD.roadAddr),
+      지번주소: getValue(row, FIELD.lotAddr),
+      전화: getValue(row, FIELD.tel),
+      관리번호: getValue(row, FIELD.mgtNo),
+      개방자치단체코드: getValue(row, FIELD.opnCode),
+      데이터갱신시점: getValue(row, FIELD.updatePoint),
+      X좌표: getValue(row, FIELD.x),
+      Y좌표: getValue(row, FIELD.y)
+    };
+  }
+  function filteredRowsForDownload() {
+    const keyword = el.quickFilter.value.trim().toLowerCase();
+    if (!keyword) return currentRows;
+    return currentRows.filter(row => {
+      const values = [getValue(row, FIELD.name), getAddress(row), getValue(row, FIELD.bizType), getValue(row, FIELD.status), getValue(row, FIELD.detailStatus)].join(' ').toLowerCase();
+      return values.includes(keyword);
+    });
+  }
+
+  function renderTable() {
+    const keyword = el.quickFilter.value.trim().toLowerCase();
+    const filtered = filteredRowsForDownload();
+    const rowsToRender = filtered.slice(0, MAX_RENDER_ROWS);
+    if (!rowsToRender.length) {
+      el.tbody.innerHTML = `<tr><td class="empty" colspan="10">${currentRows.length ? '결과 내 검색 조건에 맞는 행이 없습니다.' : '조회 결과가 없습니다.'}</td></tr>`;
+      el.tableNote.textContent = '';
+      return;
+    }
+    el.tbody.innerHTML = rowsToRender.map((row, i) => {
+      const n = normalizedRow(row, i);
+      const status = n.영업상태 || n.영업상태코드 || '';
+      return `<tr>
+        <td class="mono">${i + 1}</td>
+        <td class="mono">${escapeHtml(n.인허가일자)}</td>
+        <td><strong>${escapeHtml(n.사업장명)}</strong></td>
+        <td>${escapeHtml(status)}</td>
+        <td>${escapeHtml(n.업태)}</td>
+        <td class="addr">${escapeHtml(n.도로명주소)}</td>
+        <td class="addr">${escapeHtml(n.지번주소)}</td>
+        <td class="mono">${escapeHtml(n.전화)}</td>
+        <td class="mono">${escapeHtml(n.관리번호)}</td>
+        <td class="mono">${escapeHtml(n.데이터갱신시점)}</td>
+      </tr>`;
+    }).join('');
+    const hidden = filtered.length - rowsToRender.length;
+    el.tableNote.textContent = hidden > 0 ? `표시는 ${fmtNum(rowsToRender.length)}건까지만 했습니다. CSV에는 필터 결과 ${fmtNum(filtered.length)}건 전체가 포함됩니다.` : `표시: ${fmtNum(filtered.length)}건`;
+  }
+  function setStatus(message, type = '') {
+    el.status.className = 'status' + (type ? ` ${type}` : '');
+    el.status.textContent = message;
+  }
+  async function runSearch() {
+    stopRequested = false;
+    el.fetchBtn.disabled = true;
+    if (el.stopBtn) el.stopBtn.disabled = false;
+    el.downloadBtn.disabled = true;
+    if (el.excelBtn) el.excelBtn.disabled = true;
+    currentRows = [];
+    currentTotalCount = null;
+    renderTable();
+    updateCards();
+    updateChips();
+
+    const perPage = Math.max(1, Math.min(100, Number(el.perPage.value) || 100));
+    const maxPages = Math.max(1, Math.min(200, Number(el.maxPages.value) || 20));
+    const fetched = [];
+    const startTime = performance.now();
+
+    try {
+      saveSettings();
+      for (let page = 1; page <= maxPages; page++) {
+        if (stopRequested) break;
+        const url = buildUrl(page);
+        if (page === 1) lastRequestUrl = url;
+        setStatus(`조회 중... ${page}/${maxPages}페이지 호출\n${maskUrl(url)}`);
+        const data = await fetchData(url);
+        const items = extractItems(data);
+        const total = extractTotalCount(data);
+        if (total !== null && !Number.isNaN(total)) currentTotalCount = total;
+        fetched.push(...items);
+        setStatus(`조회 중... ${page}페이지 수신 ${fmtNum(items.length)}건 · 누적 ${fmtNum(fetched.length)}건`);
+        if (!items.length) break;
+        if (items.length < perPage) break;
+        if (currentTotalCount !== null && fetched.length >= currentTotalCount) break;
+      }
+      const dedupedRows = dedupe(fetched);
+      const filteredResult = applyClientFilters(dedupedRows);
+      currentRows = sortRows(filteredResult.rows);
+      const seconds = ((performance.now() - startTime) / 1000).toFixed(1);
+      updateCards();
+      updateChips();
+      renderTable();
+      el.downloadBtn.disabled = currentRows.length === 0;
+      if (el.excelBtn) el.excelBtn.disabled = currentRows.length === 0;
+      const apiTotalText = currentTotalCount !== null ? `API totalCount ${fmtNum(currentTotalCount)}건 · ` : '';
+      const doneLabel = stopRequested ? '중지됨' : '완료';
+      setStatus(`${doneLabel}: ${apiTotalText}현재까지 받은 데이터에서 중복 제거 및 화면 필터 후 ${fmtNum(currentRows.length)}건을 찾았습니다. (${seconds}초)${filterStatusText(filteredResult.stats)}`, currentRows.length ? 'ok' : 'warn');
+    } catch (err) {
+      const corsHint = String(err?.message || '').includes('Failed to fetch')
+        ? '\n\n브라우저 CORS 차단일 수 있습니다. 이 경우 같은 파일을 웹서버에서 열거나, 서버 프록시를 만들어 CORS 프록시 URL 칸에 넣어야 합니다.'
+        : '';
+      setStatus(`조회 실패: ${err.message || err}${corsHint}`, 'err');
+    } finally {
+      el.fetchBtn.disabled = false;
+      if (el.stopBtn) el.stopBtn.disabled = true;
+    }
+  }
+  function maskUrl(url) {
+    try {
+      const u = new URL(url);
+      if (u.searchParams.has('serviceKey')) u.searchParams.set('serviceKey', '***');
+      return u.toString();
+    } catch (_) {
+      return url.replace(/serviceKey=[^&]+/i, 'serviceKey=***');
+    }
+  }
+  function csvEscape(value) {
+    const text = String(value ?? '');
+    if (/[",\n\r]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
+    return text;
+  }
+  function downloadCsv() {
+    const downloadRows = filteredRowsForDownload();
+    if (!downloadRows.length) return;
+    const headers = Object.keys(normalizedRow(downloadRows[0], 0));
+    const lines = [headers.join(',')];
+    downloadRows.forEach((row, idx) => {
+      const normal = normalizedRow(row, idx);
+      lines.push(headers.map(h => csvEscape(normal[h])).join(','));
+    });
+    const bom = '\ufeff';
+    const blob = new Blob([bom + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    const region = (el.region.value.trim() || '전체').replace(/[\\/:*?"<>|\s]+/g, '_');
+    const filename = `신규_일반음식점_${region}_${compactDate(el.startDate.value)}_${compactDate(el.endDate.value)}.csv`;
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+  function downloadExcel() {
+    const downloadRows = filteredRowsForDownload();
+    if (!downloadRows.length) return;
+    const headers = Object.keys(normalizedRow(downloadRows[0], 0));
+    const rowsHtml = downloadRows.map((row, idx) => {
+      const normal = normalizedRow(row, idx);
+      return '<tr>' + headers.map(h => '<td>' + escapeHtml(normal[h]) + '</td>').join('') + '</tr>';
+    }).join('');
+    const table = '<table><thead><tr>' + headers.map(h => '<th>' + escapeHtml(h) + '</th>').join('') + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>';
+    const workbook = '<!doctype html><html><head><meta charset="utf-8"><style>table{border-collapse:collapse}th,td{border:1px solid #d9dee8;padding:6px 8px;text-align:left;white-space:nowrap}th{background:#eef2ff;font-weight:700}.text{mso-number-format:"\\@"}</style></head><body>' + table + '</body></html>';
+    const blob = new Blob(['\ufeff' + workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const a = document.createElement('a');
+    const region = (el.region.value.trim() || '전체').replace(/[\\/:*?"<>|\s]+/g, '_');
+    a.href = URL.createObjectURL(blob);
+    a.download = '신규_일반음식점_' + region + '_' + compactDate(el.startDate.value) + '_' + compactDate(el.endDate.value) + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  async function copyFirstUrl() {
+    try {
+      const url = buildUrl(1);
+      lastRequestUrl = url;
+      await navigator.clipboard.writeText(url);
+      setStatus('1페이지 요청 URL을 클립보드에 복사했습니다. URL에는 인증키가 포함되어 있습니다.', 'ok');
+    } catch (err) {
+      const url = lastRequestUrl || '';
+      setStatus(`복사 실패: ${err.message || err}${url ? '\n아래 URL을 수동 복사하세요.\n' + url : ''}`, 'err');
+    }
+  }
+  function saveSettings() {
+    safeLocalStorageSet('gr_api_key', el.serviceKey.value.trim());
+    safeLocalStorageSet('gr_endpoint', el.endpoint.value.trim());
+    safeLocalStorageSet('gr_region', el.region.value.trim());
+    safeLocalStorageSet('gr_per_page', String(Math.min(100, Number(el.perPage.value) || 100)));
+    safeLocalStorageSet('gr_max_pages', el.maxPages.value);
+    safeLocalStorageSet('gr_proxy_url', el.proxyUrl.value.trim());
+    safeLocalStorageSet('gr_use_api_region', el.useApiRegion.checked ? '1' : '0');
+    safeLocalStorageSet('gr_only_active', el.onlyActive.checked ? '1' : '0');
+  }
+  function resetDefaults() {
+    const today = new Date();
+    el.serviceKey.value = DEFAULT_SERVICE_KEY;
+    el.endpoint.value = DEFAULT_ENDPOINT;
+    el.region.value = '';
+    el.businessName.value = '';
+    el.opnCode.value = '';
+    const opnSelect = document.getElementById('opnCodeSelect');
+    if (opnSelect) opnSelect.value = '';
+    el.startDate.value = toIsoDate(addDays(today, -6));
+    el.endDate.value = toIsoDate(today);
+    el.perPage.value = '100';
+    el.maxPages.value = '20';
+    el.proxyUrl.value = '';
+    el.onlyActive.checked = true;
+    el.useApiRegion.checked = true;
+    el.quickFilter.value = '';
+    saveSettings();
+    currentRows = [];
+    currentTotalCount = null;
+    initOpnCodeSelect();
+    updateCards();
+    updateChips();
+    renderTable();
+    el.downloadBtn.disabled = true;
+    if (el.excelBtn) el.excelBtn.disabled = true;
+    setStatus('기본값으로 복원했습니다. 지역을 입력하고 조회하세요.');
+  }
+  function init() {
+    const today = new Date();
+    el.serviceKey.value = safeLocalStorageGet('gr_api_key') || DEFAULT_SERVICE_KEY;
+    el.endpoint.value = normalizeEndpoint(safeLocalStorageGet('gr_endpoint') || DEFAULT_ENDPOINT);
+    el.region.value = safeLocalStorageGet('gr_region') || '';
+    el.opnCode.value = safeLocalStorageGet('gr_opn_code') || '';
+    el.startDate.value = toIsoDate(addDays(today, -6));
+    el.endDate.value = toIsoDate(today);
+    el.perPage.value = String(Math.min(100, Number(safeLocalStorageGet('gr_per_page') || '100') || 100));
+    el.maxPages.value = safeLocalStorageGet('gr_max_pages') || '20';
+    el.proxyUrl.value = safeLocalStorageGet('gr_proxy_url') || '';
+    const useApiRegion = safeLocalStorageGet('gr_use_api_region');
+    const onlyActive = safeLocalStorageGet('gr_only_active');
+    if (useApiRegion !== null) el.useApiRegion.checked = useApiRegion === '1';
+    if (onlyActive !== null) el.onlyActive.checked = onlyActive === '1';
+    initOpnCodeSelect();
+    updateCards();
+    updateChips();
+    renderTable();
+
+    el.fetchBtn.addEventListener('click', runSearch);
+    if (el.stopBtn) el.stopBtn.addEventListener('click', () => { stopRequested = true; el.stopBtn.disabled = true; setStatus('조회 중지 요청됨. 현재 페이지 수신이 끝나면 멈추고 받은 데이터만 표시합니다.', 'warn'); });
+    el.copyUrlBtn.addEventListener('click', copyFirstUrl);
+    el.downloadBtn.addEventListener('click', downloadCsv);
+    if (el.excelBtn) el.excelBtn.addEventListener('click', downloadExcel);
+    el.toggleKeyBtn.addEventListener('click', () => { el.serviceKey.type = el.serviceKey.type === 'password' ? 'text' : 'password'; });
+    el.resetBtn.addEventListener('click', resetDefaults);
+    el.quickFilter.addEventListener('input', () => { renderTable(); updateChips(); });
+    el.chips.addEventListener('click', onChipClick);
+    ['serviceKey', 'endpoint', 'region', 'opnCode', 'perPage', 'maxPages', 'proxyUrl'].forEach(id => el[id].addEventListener('change', saveSettings));
+    ['onlyActive', 'useApiRegion'].forEach(id => el[id].addEventListener('change', saveSettings));
+
+    // 날짜 입력 필드: 어디를 클릭해도 캘린더가 열리도록 처리
+    [el.startDate, el.endDate].forEach(input => {
+      input.addEventListener('click', () => {
+        try { if (typeof input.showPicker === 'function') input.showPicker(); }
+        catch (_) { /* 일부 브라우저는 showPicker 미지원, 기본 동작에 위임 */ }
+      });
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
